@@ -7,8 +7,6 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
-
 con2 <- dbConnect(odbc::odbc(), "reproreplica", timeout = 10)
 result <- dbGetQuery(con2,"
 
@@ -30,29 +28,28 @@ WITH FIS AS (SELECT FISCODIGO FROM TBFIS WHERE FISTPNATOP IN ('V','R','SR')),
                             FROM PEDID P
                              INNER JOIN FIS F ON P.FISCODIGO1=F.FISCODIGO
                               INNER JOIN CLI C ON P.CLICODIGO=C.CLICODIGO AND P.ENDCODIGO=C.ENDCODIGO
-                               WHERE PEDDTEMIS BETWEEN '01.06.2022' AND 'YESTERDAY' AND PEDSITPED<>'C' AND PEDLCFINANC IN ('S', 'L','N'))
+                               WHERE 
+                                PEDDTEMIS >= DATEADD(-3 DAY TO CURRENt_DATE ) AND PEDDTEMIS<='TODAY'
+                               AND PEDSITPED<>'C' AND PEDLCFINANC IN ('S', 'L','N'))
 
         SELECT PEDDTEMIS,
-                CLICODIGO,
-                 SETOR,
                   SUM(PDPUNITLIQUIDO*PDPQTDADE)VRVENDA 
                    FROM PDPRD PD
                     INNER JOIN PED P ON PD.ID_PEDIDO=P.ID_PEDIDO
-                     GROUP BY 1,2,3")
+                     GROUP BY 1")
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-  
 
-  
 
     output$sales <- renderPlot({
 
-      result %>% melt(id.vars="PEDDTEMIS") %>% 
-        ggplot(.,aes(x=PEDDTEMIS,y=value,color=variable)) + geom_line() +
-        geom_text(aes(label=format(value,big.mark=","))) +
-        scale_x_datetime(date_breaks = "day",date_labels = "%d/%m") +
-        theme(panel.background = element_rect(fill = "#0c1839"),
+      result %>% 
+        ggplot(.,aes(x=PEDDTEMIS,y=VRVENDA)) + 
+         geom_line(color="white") +
+          geom_text(aes(label=format(VRVENDA,big.mark=",")),color="white") +
+           scale_x_datetime(date_breaks = "day",date_labels = "%d/%m") +
+            theme(panel.background = element_rect(fill = "#0c1839"),
               panel.grid.major.y = element_blank(),
               panel.grid.minor.y = element_blank(),
               panel.grid.minor.x = element_blank(),
