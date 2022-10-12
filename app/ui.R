@@ -1,11 +1,5 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# DAHBOARD APP
+# SANDRO JAKOSKA 12.10.2022
 
 library(shiny)
 library(shinydashboard)
