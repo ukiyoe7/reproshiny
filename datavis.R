@@ -1,12 +1,14 @@
 
 
+
+
 df <- dbGetQuery(con2, statement = read_file('SALES.sql'))
 
 View(df)
 
-ggplot(df,aes(x=SETOR,y=VRVENDA,fill=Segment)) + 
+ggplot(df,aes(x=SETOR,y=VRVENDA)) + 
   geom_bar(stat = "identity") + coord_flip() +  
-   geom_text(aes(label=percent(round(value,4))),position=position_stack(vjust = 0.5)) + 
+   geom_text(aes(label=percent(round(VRVENDA,4))),position=position_stack(vjust = 0.5)) + 
     scale_y_continuous(expand = c(0,0),labels = scales::percent) + 
      scale_x_discrete() + theme(legend.position = "top",
                                 axis.title.x = element_blank(),
