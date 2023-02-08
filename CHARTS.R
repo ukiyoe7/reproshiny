@@ -1,15 +1,25 @@
 library(tidyverse)
+library(lubridate)
+library(DBI)
+library(clipr)
+library(readxl)
+library(reshape2)
 
+con2 <- dbConnect(odbc::odbc(), "reproreplica", timeout = 10)
+
+
+## CONNECTION
 
 sql <- readLines("C:\\Users\\Repro\\Documents\\R\\ADM\\SHINY\\app\\SQL\\result.sql")
 sql <- paste(sql, collapse = " ")
-
-
 result <- dbGetQuery(con2,sql)
 
+## RESULT
 
-result <- result %>% group_by(SETOR) %>% 
-            summarize(VRVENDA=sum(VRVENDA))
+result2 <-
+result %>% group_by(SETOR) %>% summarize(VRVENDA=sum(VRVENDA))
+
+## METAS
 
 metas <- read.table(text = read_clip(), header = TRUE, sep = "\t") 
 
@@ -18,24 +28,29 @@ portuguese_month_names <- c("janeiro", "fevereiro", "março", "abril", "maio", "
                             "julho", "agosto", "setembro", "outubro", "novembro", "dezembro")
 
 
-
-metas2 <-  metas %>%  melt(.,id.vars="SETORES") %>% 
-    rename(MES=variable, VALOR=value) %>% 
-  mutate(VALOR = gsub("[.]", "", VALOR)) %>%
-    mutate(VALOR = as.numeric(VALOR)) %>% 
+metas2 <-  metas %>%  melt(.,id.vars="SETOR") %>% 
+    rename(MES=variable, META=value) %>% 
+  
   mutate(MES = match(MES, portuguese_month_names)) %>% 
-  mutate(MES =ymd(paste0("2023-", MES, "-01"))) %>% filter(month(MES) == month(Sys.Date()))
+  mutate(MES =ymd(paste0("2023-", MES, "-01"))) %>% filter(month(MES) == month(Sys.Date())) %>% 
+
+mutate(META = gsub("[.]", "", META)) %>%
+  mutate(META = as.numeric(META)) %>%
 
 
-result2 <- cbind(result,metas2) %>% mutate(ALCANCE=(VRVENDA/VALOR)*100) %>% 
-            mutate(SETOR=substr(SETOR,1, 8)
-)
+## ALCANCE
 
-View(result2)
+result3 <- left_join(result2,metas2,by="SETOR") %>%
+              mutate(ALCANCE=(VRVENDA/META)*100) %>% 
+                mutate(SETOR=substr(SETOR,1, 8))
+                  
+View(result3)
 
-result %>% 
-  ggplot(.,aes(x=PEDDTEMIS,y=VRVENDA,fill=SETOR)) + 
-  geom_line(color="white") +
+# CHART
+
+result3 %>% 
+  ggplot(.,aes(x=SETOR,y=VRVENDA)) + 
+  geom_line(color="#ffc3a0") +
   geom_text(aes(label=format(VRVENDA,big.mark=",")),color="white") +
   scale_x_datetime(date_breaks = "day",date_labels = "%d/%m") +
   theme(panel.background = element_rect(fill = "#0c1839"),
@@ -45,33 +60,32 @@ result %>%
         panel.grid.major.x = element_line(colour = "#15295f"),
         legend.position = "top")
 
-
-
 ## BULLET CHART
 
-name = c("Alex","Bob","David","Mike","Jess","Steve","Elina","Ethan","Jordan","Jim")
-count= c(89,85,76,64,50,45,29,20,10,5)
-data = data.frame(name, count, stringsAsFactors = TRUE)
 
-data <- result2 %>% mutate(width = seq(.8, .1, length.out = nrow(result)))
+data <- result3 %>% mutate(width = seq(.8, .1, length.out = nrow(result)))
 
 bullet_base <- data.frame(rank = c("Poor", "Ok", "Good", "Excellent"),
                           value = c(20, 20, 20, 40))
 bullet_base_rep <- 
-  do.call("rbind", replicate(nrow(result2), bullet_base, simplify = FALSE)) %>%
-  mutate(SETOR = sort(rep(result2$SETOR, 4) ))
+  do.call("rbind", replicate(nrow(result3), bullet_base, simplify = FALSE)) %>%
+  mutate(SETOR = sort(rep(result3$SETOR, 4) ))
 
 
 bullet_colors <- c("#E9FFE3", "#A3D694", "#61AB40", "#318100")
 names(bullet_colors) <- c("Poor", "Ok", "Good", "Excellent")
 
+SETOR_ORDER <- 
+factor(result3$SETOR, levels = unique(result3$SETOR)[order(unique(result3$SETOR), decreasing = TRUE)]) %>% as.list()
+
 ggplot() +
   geom_bar(data = bullet_base_rep, 
-           aes(x = SETOR, y = value, fill = rank), stat = "identity",
+           aes(x =fct_rev(SETOR), y = value,fill = rank), stat = "identity",
            position = "stack") +
-  geom_bar(data = result2, 
-           aes(x = SETOR, y = ALCANCE ), fill = "black", width = .2,
-           stat = "identity") +
+  geom_bar(data = result3, 
+           aes(x = fct_rev(SETOR), y = ALCANCE ), fill = "black", width = .5,
+           stat = "identity") + 
   scale_fill_manual(values = bullet_colors) +
-  coord_flip(expand = FALSE)
+  
+  coord_flip(expand = FALSE) 
 

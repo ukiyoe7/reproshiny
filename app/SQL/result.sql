@@ -1,3 +1,5 @@
+
+
 WITH FIS AS (SELECT FISCODIGO FROM TBFIS WHERE FISTPNATOP IN ('V','R','SR')),
 
        CLI AS (SELECT DISTINCT C.CLICODIGO,
@@ -6,8 +8,12 @@ WITH FIS AS (SELECT FISCODIGO FROM TBFIS WHERE FISTPNATOP IN ('V','R','SR')),
                          SETOR
                           FROM CLIEN C
                            LEFT JOIN (SELECT CLICODIGO,E.ZOCODIGO,ZODESCRICAO SETOR,ENDCODIGO FROM ENDCLI E
-                            INNER JOIN (SELECT ZOCODIGO,ZODESCRICAO FROM ZONA WHERE ZOCODIGO IN (20,21,22,23,24,25,26,27,28))Z ON E.ZOCODIGO=Z.ZOCODIGO WHERE ENDFAT='S')A ON C.CLICODIGO=A.CLICODIGO
-                             WHERE CLICLIENTE='S'),
+                            INNER JOIN (SELECT ZOCODIGO,ZODESCRICAO 
+                                                              FROM ZONA 
+                                                               WHERE ZOCODIGO IN (20,21,22,23,24,25,26,27,28))Z ON 
+                                                                E.ZOCODIGO=Z.ZOCODIGO WHERE ENDFAT='S')A ON 
+                                                                 C.CLICODIGO=A.CLICODIGO
+                                                                  WHERE CLICLIENTE='S'),
 
          PED AS (SELECT ID_PEDIDO,
                          P.CLICODIGO,
