@@ -4,6 +4,7 @@ library(DBI)
 library(clipr)
 library(readxl)
 library(reshape2)
+library(scales)
 
 con2 <- dbConnect(odbc::odbc(), "reproreplica", timeout = 10)
 
@@ -65,27 +66,33 @@ result3 %>%
 
 data <- result3 %>% mutate(width = seq(.8, .1, length.out = nrow(result)))
 
-bullet_base <- data.frame(rank = c("Poor", "Ok", "Good", "Excellent"),
-                          value = c(20, 20, 20, 40))
+bullet_base <- data.frame(rank = c("Ruim", "Regular", "Bom", "Otimo"),
+                          value = c(50, 30, 0.5, 18.5))
 bullet_base_rep <- 
   do.call("rbind", replicate(nrow(result3), bullet_base, simplify = FALSE)) %>%
   mutate(SETOR = sort(rep(result3$SETOR, 4) ))
 
 
-bullet_colors <- c("#E9FFE3", "#A3D694", "#61AB40", "#318100")
-names(bullet_colors) <- c("Poor", "Ok", "Good", "Excellent")
-
-SETOR_ORDER <- 
-factor(result3$SETOR, levels = unique(result3$SETOR)[order(unique(result3$SETOR), decreasing = TRUE)]) %>% as.list()
+bullet_colors <- c("#ebe7e7", "#e5dfe0", "#000000","#dfd7d8")
+names(bullet_colors) <- c("Ruim", "Regular", "Bom", "Otimo")
 
 ggplot() +
   geom_bar(data = bullet_base_rep, 
-           aes(x =fct_rev(SETOR), y = value,fill = rank), stat = "identity",
+           aes(x =fct_rev(SETOR), y = value,fill = rank,width = .7), stat = "identity",
            position = "stack") +
   geom_bar(data = result3, 
-           aes(x = fct_rev(SETOR), y = ALCANCE ), fill = "black", width = .5,
+           aes(x = fct_rev(SETOR), y = ALCANCE ), fill = "#1974d2", width = .5,
            stat = "identity") + 
+  geom_text(data = result3, aes(x = fct_rev(SETOR), y = ALCANCE, label = percent(round(ALCANCE,1)/100)), 
+            position = position_dodge(width = .7), vjust = 0.5, hjust = -0.1,size=5) +
   scale_fill_manual(values = bullet_colors) +
   
-  coord_flip(expand = FALSE) 
+  coord_flip(expand = FALSE) + theme(axis.title.y=element_blank(),
+                                     axis.text.y = element_text(size = 13),legend.position = "none") +
+  theme(panel.background = element_rect(fill = "transparent"),
+        panel.grid = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
 
