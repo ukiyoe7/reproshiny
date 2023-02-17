@@ -18,15 +18,15 @@ WITH FIS AS (SELECT FISCODIGO FROM TBFIS WHERE FISTPNATOP IN ('V','R','SR')),
          PED AS (SELECT ID_PEDIDO,
                          P.CLICODIGO,
                           SETOR,
-                           PEDDTEMIS 
+                           PEDDTBAIXA
                             FROM PEDID P
                              INNER JOIN FIS F ON P.FISCODIGO1=F.FISCODIGO
                               INNER JOIN CLI C ON P.CLICODIGO=C.CLICODIGO AND P.ENDCODIGO=C.ENDCODIGO
                                WHERE
-                                PEDDTEMIS BETWEEN (CURRENT_DATE) - EXTRACT(DAY FROM (CURRENT_DATE)) + 1 AND 'YESTERDAY'
+                                PEDDTBAIXA BETWEEN (CURRENT_DATE) - EXTRACT(DAY FROM (CURRENT_DATE)) + 1 AND 'YESTERDAY'
                                     AND PEDSITPED<>'C' AND PEDLCFINANC IN ('S', 'L','N'))
 
-        SELECT PEDDTEMIS,
+        SELECT PEDDTBAIXA,
                 SETOR,
                   SUM(PDPUNITLIQUIDO*PDPQTDADE)VRVENDA 
                    FROM PDPRD PD

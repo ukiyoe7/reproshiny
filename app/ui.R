@@ -9,8 +9,7 @@ library(lubridate)
 library(magrittr)
 library(reshape2)
 library(zoo)
-
-
+library(scales)
 
 
 dashboardPage(
@@ -18,7 +17,28 @@ dashboardPage(
   dashboardSidebar(),
   dashboardBody(
     
-    plotOutput(outputId = "sales")
+    fluidRow(
+      
+        box(title = "EMISSÃO", status = "primary",
+            fluidRow(
+              
+                plotOutput(outputId = "sales")
+              
+            )
+        )
+      ,
+    
+        width = 6,
+        offset = 0,
+        box(title = "FATURADO", status = "primary",
+            fluidRow(
+             
+                plotOutput(outputId = "sales_fat")
+              
+            )
+        )
+      )
+    )
     
   )
-)
+
